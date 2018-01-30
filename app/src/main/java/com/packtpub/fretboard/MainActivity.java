@@ -19,9 +19,6 @@ public class MainActivity extends Activity implements View.OnClickListener
 
         Button goButton = (Button)findViewById(R.id.goButton);
         goButton.setOnClickListener(this);
-        TextView tuningTextView = (TextView)findViewById(R.id.tuningTextView);
-        TextView myNotesTextView = (TextView)findViewById(R.id.myNotesTextView);
-
     }
 
     @Override
@@ -32,8 +29,9 @@ public class MainActivity extends Activity implements View.OnClickListener
             String tuningString = tuningTextView.getText().toString();
             TextView myNotesTextView = (TextView)findViewById(R.id.myNotesTextView);
             String chosenNotes = myNotesTextView.getText().toString();
-            Intent i;
-            i = new Intent(this,fretboardActivity.class);
+            Intent i = new Intent(this,fretboardActivity.class);
+            i.putExtra("tuningString", tuningString);
+            i.putExtra("chosenNotes", chosenNotes);
             startActivity(i);
 
         }

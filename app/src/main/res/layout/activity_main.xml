@@ -13,12 +13,11 @@
         android:layout_marginEnd="8dp"
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
-        android:text="Tuning"
+        android:hint="Tuning"
         android:textSize="30sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        tools:text="Tuning" />
+        app:layout_constraintTop_toTopOf="parent" />
 
     <EditText
         android:id="@+id/myNotesTextView"
@@ -27,12 +26,12 @@
         android:layout_marginEnd="8dp"
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
-        android:text="Desired Notes"
+        android:hint="Desired Notes"
+        android:textAlignment="center"
         android:textSize="30sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tuningTextView"
-        tools:text="Desired Notes" />
+        app:layout_constraintTop_toBottomOf="@+id/tuningTextView" />
 
     <Button
         android:id="@+id/goButton"
