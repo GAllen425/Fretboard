@@ -44,7 +44,7 @@ public class fretboardActivity extends Activity {
         Log.d("onCreate", "height: " + height);
 
 
-        Bitmap bitmap = Bitmap.createBitmap(100,300, Bitmap.Config.ARGB_8888);
+        Bitmap bitmap = Bitmap.createBitmap(200,500, Bitmap.Config.ARGB_8888);
         Canvas fretboardCanvas = new Canvas(bitmap);
 
         Intent i = getIntent();
@@ -78,15 +78,17 @@ public class fretboardActivity extends Activity {
         StringTokenizer st2 = new StringTokenizer(chosenNotesFinal, " ");
         ArrayList chosenNotesArrayList = new ArrayList(st2.countTokens());
         while (st2.hasMoreTokens()) {
-            tuningNoteArrayList.add(st2.nextToken());
+            chosenNotesArrayList.add(st2.nextToken());
         }
         // TODO decide whether to pass canvas, bitmap or imageview?
         // TODO write function that draws strings then focus on frets after
+        int Array[][] = mapChosenNotesToFretboard(tuningNoteArrayList,chosenNotesArrayList);
         drawFretboard(tuningNoteArrayList, chosenNotesArrayList,bitmap,fretboardCanvas);
         Bitmap fretboardBitmap = Bitmap.createScaledBitmap(bitmap,width,height,true);
         fretboardImageView.setImageBitmap(fretboardBitmap);
     }
 
+    //<TODO> draws incorrect number of strings i.e. 9 strings if there are 3 chosen notes and 6 tuning notes
     public void drawFretboard (ArrayList tuningNoteArrayList,  ArrayList chosenNotesArrayList, Bitmap bitmap, Canvas fretboardCanvas)
     {
         Paint myPaint = new Paint();
@@ -119,6 +121,87 @@ public class fretboardActivity extends Activity {
             stringY[i] = i*(screenHeight/(numberOfFrets-1));
             fretboardCanvas.drawRect(startOfScreenX, stringY[i],stringWidth + stringX[numberOfStrings-1], stringY[i] + stringWidth,myPaint);
         }
+
+
+    }
+
+    public int note_stringToValue(String note)
+    {
+        int noteValue=0;
+        //defaults to C
+        if (note == "C") { noteValue = 0; }
+        else if (note == "C#") { noteValue = 1; }
+        else if (note == "D") { noteValue = 2; }
+        else if (note == "D#") { noteValue = 3; }
+        else if (note == "E") { noteValue = 4; }
+        else if (note == "F") { noteValue = 5; }
+        else if (note == "F#") { noteValue = 6; }
+        else if (note == "G") { noteValue = 7; }
+        else if (note == "G#") { noteValue = 8; }
+        else if (note == "A") { noteValue = 9; }
+        else if (note == "A#") { noteValue = 10; }
+        else if (note == "B") { noteValue = 11; }
+        return noteValue;
+    }
+
+    public String note_valueToString(int number) {
+        String letter = new String();
+        if (number == 0) { letter = "C"; }
+        else if (number == 1) { letter = "C#"; }
+        else if (number == 2) { letter = "D"; }
+        else if (number == 3) { letter = "D#"; }
+        else if (number == 4) { letter = "E"; }
+        else if (number == 5) { letter = "F"; }
+        else if (number == 6) { letter = "F#"; }
+        else if (number == 7) { letter = "G"; }
+        else if (number == 8) { letter = "G#"; }
+        else if (number == 9) { letter = "A"; }
+        else if (number == 10) { letter = "A#"; }
+        else if (number == 11) { letter = "B"; }
+        return letter;
+    }
+
+    public int[][] mapChosenNotesToFretboard(ArrayList chosenNotes, ArrayList tuningNotes)
+    {
+        int chosenNoteBinaryMap[] = new int [12];
+        for(int i=0 ; i < chosenNotes.size(); i++)
+        {
+            int note = note_stringToValue(chosenNotes.get(i).toString());
+            chosenNoteBinaryMap[note] = 1;
+        }
+
+
+        int numberOfGuitarStrings = tuningNotes.size();
+        int [][] fretboardValues = new int [numberOfGuitarStrings][13];
+        int[][] mapping = new int [numberOfGuitarStrings][13];
+        // 0 | 1 2 3 4 5 6 7 8 9 10 12
+        // 0 | 1 2 3 4 5 6 7 8 9 10 12
+        // 0 | 1 2 3 4 5 6 7 8 9 10 12
+        // 0 | 1 2 3 4 5 6 7 8 9 10 12
+        // 0 | 1 2 3 4 5 6 7 8 9 10 12
+        // 0 | 1 2 3 4 5 6 7 8 9 10 12
+
+        for(int i=0; i < numberOfGuitarStrings; i++)
+        {
+            fretboardValues[i][0] = note_stringToValue(tuningNotes.get(i).toString());
+
+            for(int j=1; j<13; j++)
+            {
+                fretboardValues[i][j] = (fretboardValues[i][j-1] + 1) % 12;
+                if ( chosenNoteBinaryMap[fretboardValues[i][j]] == 1 )
+                {
+                    mapping[i][j] = 1;
+                }
+                else
+                {
+                    mapping[i][j] = 0;
+                }
+                Log.d("binaryMap", "" + i + ": " + mapping[i][j]);
+            }
+            Log.d("binaryMap", "NEXT STRING");
+        }
+
+        return mapping;
     }
 
 }
