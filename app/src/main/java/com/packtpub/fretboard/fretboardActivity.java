@@ -19,6 +19,7 @@ import android.graphics.drawable.BitmapDrawable;
 
 import org.w3c.dom.Text;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.StringTokenizer;
 import java.util.logging.Logger;
@@ -82,13 +83,13 @@ public class fretboardActivity extends Activity {
         // TODO decide whether to pass canvas, bitmap or imageview?
         // TODO write function that draws strings then focus on frets after
         int Array[][] = mapChosenNotesToFretboard(tuningNoteArrayList,chosenNotesArrayList);
-        drawFretboard(tuningNoteArrayList, chosenNotesArrayList,bitmap,fretboardCanvas);
+        drawFretboard(tuningNoteArrayList, chosenNotesArrayList,Array,bitmap,fretboardCanvas);
         Bitmap fretboardBitmap = Bitmap.createScaledBitmap(bitmap,width,height,true);
         fretboardImageView.setImageBitmap(fretboardBitmap);
     }
 
     //<TODO> draws incorrect number of strings i.e. 9 strings if there are 3 chosen notes and 6 tuning notes
-    public void drawFretboard (ArrayList tuningNoteArrayList,  ArrayList chosenNotesArrayList, Bitmap bitmap, Canvas fretboardCanvas)
+    public void drawFretboard (ArrayList tuningNoteArrayList, ArrayList chosenNotesArrayList, int mappingArray[][], Bitmap bitmap, Canvas fretboardCanvas)
     {
         Paint myPaint = new Paint();
         myPaint.setColor(Color.BLACK);
@@ -119,6 +120,17 @@ public class fretboardActivity extends Activity {
         for(int i=0; i<numberOfFrets; i++){
             stringY[i] = i*(screenHeight/(numberOfFrets-1));
             fretboardCanvas.drawRect(startOfScreenX, stringY[i],stringWidth + stringX[numberOfStrings-1], stringY[i] + stringWidth,myPaint);
+        }
+
+        for(int i=0; i<numberOfStrings; i++)
+        {
+            for(int j=0; j<12; j++)
+            {
+                if(mappingArray[i][j] == 1)
+                {
+                    fretboardCanvas.drawCircle(stringX[i]+stringWidth/2, stringY[j]+stringSeparation/2, stringSeparation/4, myPaint);
+                }
+            }
         }
 
     }
