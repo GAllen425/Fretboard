@@ -121,7 +121,6 @@ public class fretboardActivity extends Activity {
             fretboardCanvas.drawRect(startOfScreenX, stringY[i],stringWidth + stringX[numberOfStrings-1], stringY[i] + stringWidth,myPaint);
         }
 
-
     }
 
     public int note_stringToValue(String note)
@@ -171,7 +170,6 @@ public class fretboardActivity extends Activity {
             chosenNoteBinaryMap[note] = 1;
         }
 
-
         int numberOfGuitarStrings = tuningNotes.size();
         int [][] fretboardValues = new int [numberOfGuitarStrings][13];
         int[][] mapping = new int [numberOfGuitarStrings][13];
@@ -210,7 +208,6 @@ public class fretboardActivity extends Activity {
             }
             Log.d("binaryMap", "NEXT STRING");
         }
-
         return mapping;
     }
 
