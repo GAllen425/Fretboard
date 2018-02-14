@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Color;
 import android.provider.ContactsContract;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.ImageView;
@@ -54,7 +53,7 @@ public class fretboardActivity extends Activity {
         TextView chosenTextView = (TextView) findViewById(R.id.chosenTextView);
 
         String tuningStringFinal = "E A D G B E";
-        if (extrasBundle.containsKey("chosenNotes")) {
+        if (extrasBundle.containsKey("tuningString")) {
             tuningStringFinal = extrasBundle.getString("tuningString");
             fretboardTuningTextView.setText(tuningStringFinal);
         } else {
@@ -127,20 +126,20 @@ public class fretboardActivity extends Activity {
 
     public int note_stringToValue(String note)
     {
-        int noteValue=0;
+        int noteValue = 0;
         //defaults to C
-        if (note == "C") { noteValue = 0; }
-        else if (note == "C#") { noteValue = 1; }
-        else if (note == "D") { noteValue = 2; }
-        else if (note == "D#") { noteValue = 3; }
-        else if (note == "E") { noteValue = 4; }
-        else if (note == "F") { noteValue = 5; }
-        else if (note == "F#") { noteValue = 6; }
-        else if (note == "G") { noteValue = 7; }
-        else if (note == "G#") { noteValue = 8; }
-        else if (note == "A") { noteValue = 9; }
-        else if (note == "A#") { noteValue = 10; }
-        else if (note == "B") { noteValue = 11; }
+        if (note.equals("C")) { noteValue = 0; }
+        else if (note.equals("C#")) { noteValue = 1; }
+        else if (note.equals("D")) { noteValue = 2; }
+        else if (note.equals("D#")) { noteValue = 3; }
+        else if (note.equals("E")) { noteValue = 4; }
+        else if (note.equals("F")) { noteValue = 5; }
+        else if (note.equals("F#")) { noteValue = 6; }
+        else if (note.equals("G")) { noteValue = 7; }
+        else if (note.equals("G#")) { noteValue = 8; }
+        else if (note.equals("A")) { noteValue = 9; }
+        else if (note.equals("A#")) { noteValue = 10; }
+        else if (note.equals("B")) { noteValue = 11; }
         return noteValue;
     }
 
@@ -161,12 +160,14 @@ public class fretboardActivity extends Activity {
         return letter;
     }
 
-    public int[][] mapChosenNotesToFretboard(ArrayList chosenNotes, ArrayList tuningNotes)
+    public int[][] mapChosenNotesToFretboard(ArrayList tuningNotes, ArrayList chosenNotes)
     {
         int chosenNoteBinaryMap[] = new int [12];
         for(int i=0 ; i < chosenNotes.size(); i++)
         {
-            int note = note_stringToValue(chosenNotes.get(i).toString());
+            String noteString = chosenNotes.get(i).toString();
+            int note = note_stringToValue(noteString);
+            Log.d("chosen notes","|" + noteString + "|" + note);
             chosenNoteBinaryMap[note] = 1;
         }
 
@@ -184,6 +185,15 @@ public class fretboardActivity extends Activity {
         for(int i=0; i < numberOfGuitarStrings; i++)
         {
             fretboardValues[i][0] = note_stringToValue(tuningNotes.get(i).toString());
+            if ( chosenNoteBinaryMap[fretboardValues[i][0]] == 1)
+            {
+                mapping[i][0]=1;
+            }
+            else
+            {
+                mapping[i][0]=0;
+            }
+            Log.d("binaryMap", "" + i + ": " + mapping[i][0]);
 
             for(int j=1; j<13; j++)
             {
