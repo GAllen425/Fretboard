@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Color;
-import android.provider.ContactsContract;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.ImageView;
@@ -19,6 +18,9 @@ import android.graphics.drawable.BitmapDrawable;
 
 import org.w3c.dom.Text;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.StringTokenizer;
@@ -44,7 +46,7 @@ public class fretboardActivity extends Activity {
         Log.d("onCreate", "height: " + height);
 
 
-        Bitmap bitmap = Bitmap.createBitmap(200,500, Bitmap.Config.ARGB_8888);
+        Bitmap bitmap = Bitmap.createBitmap(1000,2500, Bitmap.Config.ARGB_8888);
         Canvas fretboardCanvas = new Canvas(bitmap);
 
         Intent i = getIntent();
@@ -82,18 +84,22 @@ public class fretboardActivity extends Activity {
         }
         // TODO decide whether to pass canvas, bitmap or imageview?
         // TODO write function that draws strings then focus on frets after
+
+        // TODO bitmap cuts off at bottom/ drawing is scaled incorrectly
+        // see the myfile.png output for example
         int Array[][] = mapChosenNotesToFretboard(tuningNoteArrayList,chosenNotesArrayList);
         drawFretboard(tuningNoteArrayList, chosenNotesArrayList,Array,bitmap,fretboardCanvas);
         Bitmap fretboardBitmap = Bitmap.createScaledBitmap(bitmap,width,height,true);
-        fretboardImageView.setImageBitmap(fretboardBitmap);
+        fretboardImageView.setImageBitmap(bitmap);
+        saveToFile(bitmap, "myfile.png");
     }
 
-    //<TODO> draws incorrect number of strings i.e. 9 strings if there are 3 chosen notes and 6 tuning notes
     public void drawFretboard (ArrayList tuningNoteArrayList, ArrayList chosenNotesArrayList, int mappingArray[][], Bitmap bitmap, Canvas fretboardCanvas)
     {
         Paint myPaint = new Paint();
         myPaint.setColor(Color.BLACK);
 
+        int numberOfFrets = 12;
         int screenWidth = bitmap.getWidth();
         int screenHeight = bitmap.getHeight();
 
@@ -108,18 +114,20 @@ public class fretboardActivity extends Activity {
         Log.d("screenWidth", "" + screenWidth);
 
         float stringSeparation = 0;
+        float fretSeparation = 0;
+        stringSeparation = (float)(1./(numberOfStrings-1)*(1-2*startOfScreenX/screenWidth)*screenWidth);
+        fretSeparation = (screenHeight/(numberOfFrets-1));
+
         for(int i=0; i < numberOfStrings ; i++) {
-            stringSeparation = (float)(1./(numberOfStrings-1)*(1-2*startOfScreenX/screenWidth)*screenWidth);
             stringX[i] = (startOfScreenX + i*stringSeparation - stringWidth/2);
             Log.d("stringSeparation", "" + stringSeparation);
             Log.d("stringX", "String[" +i+ "]" + stringX[i]);
-            fretboardCanvas.drawRect(stringX[i], screenHeight, stringX[i] + stringWidth, 0, myPaint);
+            fretboardCanvas.drawRect(stringX[i], screenHeight, stringX[i] + stringWidth,(screenHeight/(numberOfFrets-1)) , myPaint);
         }
-        int numberOfFrets = 12;
-        float stringY[] = new float[numberOfFrets];
-        for(int i=0; i<numberOfFrets; i++){
-            stringY[i] = i*(screenHeight/(numberOfFrets-1));
-            fretboardCanvas.drawRect(startOfScreenX, stringY[i],stringWidth + stringX[numberOfStrings-1], stringY[i] + stringWidth,myPaint);
+        float stringY[] = new float[numberOfFrets+1];
+        for(int i=1; i<=numberOfFrets; i++){
+            stringY[i] = i*fretSeparation;
+            fretboardCanvas.drawRect(startOfScreenX, stringY[i],stringWidth + stringX[numberOfStrings-1], stringY[i] + stringWidth, myPaint);
         }
 
         for(int i=0; i<numberOfStrings; i++)
@@ -128,7 +136,7 @@ public class fretboardActivity extends Activity {
             {
                 if(mappingArray[i][j] == 1)
                 {
-                    fretboardCanvas.drawCircle(stringX[i]+stringWidth/2, stringY[j]+stringSeparation/2, stringSeparation/4, myPaint);
+                    fretboardCanvas.drawCircle(stringX[i]+stringWidth/2, stringY[j]+fretSeparation/2, fretSeparation/4, myPaint);
                 }
             }
         }
@@ -221,6 +229,29 @@ public class fretboardActivity extends Activity {
             Log.d("binaryMap", "NEXT STRING");
         }
         return mapping;
+    }
+
+    public void saveToFile(Bitmap bitmap, String filename){
+        String path = this.getFilesDir().getAbsolutePath();
+        File file = new File(path,  filename);
+        FileOutputStream out = null;
+
+        Log.d("file location", file.getAbsolutePath());
+
+        try {
+            out = new FileOutputStream(file);
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (out != null) {
+                    out.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
 }
