@@ -94,6 +94,7 @@ public class fretboardActivity extends Activity {
         saveToFile(bitmap, "myfile.png");
     }
 
+
     public void drawFretboard (ArrayList tuningNoteArrayList, ArrayList chosenNotesArrayList, int mappingArray[][], Bitmap bitmap, Canvas fretboardCanvas)
     {
         Paint myPaint = new Paint();
@@ -125,18 +126,25 @@ public class fretboardActivity extends Activity {
             fretboardCanvas.drawRect(stringX[i], screenHeight, stringX[i] + stringWidth,(screenHeight/(numberOfFrets-1)) , myPaint);
         }
         float stringY[] = new float[numberOfFrets+1];
-        for(int i=1; i<=numberOfFrets; i++){
-            stringY[i] = i*fretSeparation;
-            fretboardCanvas.drawRect(startOfScreenX, stringY[i],stringWidth + stringX[numberOfStrings-1], stringY[i] + stringWidth, myPaint);
+        for(int i=1; i<=numberOfFrets+1; i++){
+            stringY[i-1] = i*fretSeparation;
+            Log.d("fret coordinate", "" + stringY[i-1] + "" + (i-1));
+            fretboardCanvas.drawRect(startOfScreenX, stringY[i-1],stringWidth + stringX[numberOfStrings-1], stringY[i-1] + stringWidth, myPaint);
         }
 
         for(int i=0; i<numberOfStrings; i++)
         {
-            for(int j=0; j<12; j++)
+            if(mappingArray[i][0] == 1)
+            {
+                fretboardCanvas.drawCircle(stringX[i]+stringWidth/2, stringY[0]-fretSeparation/2,
+                        fretSeparation/4, myPaint);
+            }
+            for(int j=1; j<12; j++)
             {
                 if(mappingArray[i][j] == 1)
                 {
-                    fretboardCanvas.drawCircle(stringX[i]+stringWidth/2, stringY[j]+fretSeparation/2, fretSeparation/4, myPaint);
+                    fretboardCanvas.drawCircle(stringX[i]+stringWidth/2, stringY[j-1]+fretSeparation/2,
+                            fretSeparation/4, myPaint);
                 }
             }
         }
