@@ -23,7 +23,9 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Array;
+import java.util.*;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.StringTokenizer;
 import java.util.logging.Logger;
 
@@ -45,10 +47,6 @@ public class fretboardActivity extends Activity {
 
         Log.d("onCreate", "width: " + width);
         Log.d("onCreate", "height: " + height);
-
-
-        Bitmap bitmap = Bitmap.createBitmap(1000,2500, Bitmap.Config.ARGB_8888);
-        Canvas fretboardCanvas = new Canvas(bitmap);
 
         Intent i = getIntent();
         Bundle extrasBundle = i.getExtras();
@@ -88,25 +86,54 @@ public class fretboardActivity extends Activity {
 
         // TODO bitmap cuts off at bottom/ drawing is scaled incorrectly
         // see the myfile.png output for example
-        int Array[][] = mapChosenNotesToFretboard(tuningNoteArrayList,chosenNotesArrayList);
-        drawFretboard(tuningNoteArrayList, chosenNotesArrayList,Array,bitmap,fretboardCanvas);
-        Bitmap fretboardBitmap = Bitmap.createScaledBitmap(bitmap,width,height,true);
+
+
+        Fretboard myFretboard = new Fretboard(tuningNoteArrayList,chosenNotesArrayList);
+        myFretboard.mapFretboard();
+        Bitmap bitmap = Bitmap.createBitmap(1000,myFretboard.getHeight(), Bitmap.Config.ARGB_8888);
+        Canvas fretboardCanvas = new Canvas(bitmap);
+        myFretboard.drawFretboard(myFretboard.getBinaryChosenMap(),fretboardCanvas);
+
         fretboardImageView.setImageBitmap(bitmap);
         saveToFile(bitmap, "myfile.png");
     }
 
+    public class Fretboard {
 
-    public void drawFretboard (ArrayList tuningNoteArrayList, ArrayList chosenNotesArrayList, int mappingArray[][]) {
+        private String[] tuningNotesArray;
+        private String[] chosenNotesArray;
 
-    }
+        Fretboard(ArrayList<String> tuningArrayList, ArrayList<String> chosenArrayList)
+        {
+            tuningNotesArray = tuningArrayList.toArray(new String[0]);
+            chosenNotesArray = chosenArrayList.toArray(new String[0]);
+            binaryChosenMap = mapChosenNotesToFretboard(tuningNotesArray,chosenNotesArray);
+            numberOfStrings = tuningNotesArray.length;
+            stringX = new float[getNumberOfStrings()];
+            fretY = new float[getNumberOfFrets()+1];
+            Log.d("No of String","" + numberOfStrings);
+        }
 
-    public class fretboard {
+        private float[] stringX = new float[getNumberOfStrings()];
+        private float[] fretY = new float[getNumberOfFrets()+1];
+
+        public float[] getStringX() {
+            return stringX;
+        }
+        public float[] getFretY() {
+            return fretY;
+        }
+        public int getHeight() {
+            return (int)(fretY[fretY.length - 1]);
+        }
+
+        private int[][] binaryChosenMap;
+
         private Paint myPaint = new Paint();
 
-        private ArrayList tuningNoteArrayList[];
-        private ArrayList chosenNotesArrayList[];
-
-        //get screen width
+        // <TODO>
+        // sort out screenheight, need to think of a better method than setting a flat number,
+        // then dynamically increasing it
         private float screenWidth = 1000;
         private float screenHeight = 4000;
         private float stringWidth;
@@ -142,8 +169,8 @@ public class fretboardActivity extends Activity {
             return fretSeparation;
         }
 
-        private int numberOfFrets = 0;
-        private int numberOfStrings = tuningNoteArrayList.length;
+        private int numberOfFrets = 12;
+        private int numberOfStrings = 6;
 
         public void setNumberOfFrets(int numberOfFrets) {
             this.numberOfFrets = numberOfFrets;
@@ -157,17 +184,14 @@ public class fretboardActivity extends Activity {
             return numberOfFrets;
         }
 
-        fretboard(ArrayList tuningArray[], ArrayList chosenArray[])
-        {
-            tuningNoteArrayList = tuningArray.clone();
-            chosenNotesArrayList = chosenArray.clone();
+        public int[][] getBinaryChosenMap() {
+            return binaryChosenMap;
         }
 
         public void mapFretboard(){
+            float stringX[] = getStringX();
+            float fretY[] = getFretY();
             if(getNumberOfFrets() != 0){setNumberOfFrets(12);}
-
-            float stringX[] = new float[getNumberOfStrings()];
-            float fretY[] = new float[getNumberOfFrets()+1];
 
             setStartOfScreenX(1000);
             setStringWidth(screenWidth/64);
@@ -180,7 +204,7 @@ public class fretboardActivity extends Activity {
             setStringSeparation((float) (1. / (numberOfStrings - 1) * (1 - 2 * startOfScreenX / screenWidth) * screenWidth));
             setFretSeparation(screenHeight / (numberOfFrets - 1));
 
-            for (int i = 0; i < numberOfStrings; i++) {
+            for (int i = 0; i < getNumberOfStrings(); i++) {
                 stringX[i] = (startOfScreenX + i * stringSeparation - stringWidth / 2);
                 Log.d("stringSeparation", "" + stringSeparation);
                 Log.d("stringX", "String[" + i + "]" + stringX[i]);
@@ -189,17 +213,70 @@ public class fretboardActivity extends Activity {
             for (int i = 1; i <= numberOfFrets + 1; i++) {
                 fretY[i - 1] = i * fretSeparation;
                 Log.d("fret coordinate", "" + fretY[i - 1] + " " + (i - 1));
-                if (fretY[i - 1] > (7. / 8.) * screenHeight) {
-                    screenHeight *= 1.25;
+                if(fretY[i-1] > 0.875*screenHeight)
+                {
+                    screenHeight*=1.25;
                 }
             }
         }
 
+        public int[][] mapChosenNotesToFretboard(String[] tuningNotes, String[] chosenNotes)
+        {
+            int chosenNoteBinaryMap[] = new int [12];
+            for(int i=0 ; i < chosenNotes.length; i++)
+            {
+                String noteString = chosenNotes[i];
+                int note = note_stringToValue(noteString);
+                Log.d("chosen notes","|" + noteString + "|" + note);
+                chosenNoteBinaryMap[note] = 1;
+            }
 
+            int numberOfGuitarStrings = tuningNotes.length;
+            int [][] fretboardValues = new int [numberOfGuitarStrings][13];
+            int[][] mapping = new int [numberOfGuitarStrings][13];
+            // 0 | 1 2 3 4 5 6 7 8 9 10 12
+            // 0 | 1 2 3 4 5 6 7 8 9 10 12
+            // 0 | 1 2 3 4 5 6 7 8 9 10 12
+            // 0 | 1 2 3 4 5 6 7 8 9 10 12
+            // 0 | 1 2 3 4 5 6 7 8 9 10 12
+            // 0 | 1 2 3 4 5 6 7 8 9 10 12
 
+            for(int i=0; i < numberOfGuitarStrings; i++)
+            {
+                fretboardValues[i][0] = note_stringToValue(tuningNotes[i]);
+                if ( chosenNoteBinaryMap[fretboardValues[i][0]] == 1)
+                {
+                    mapping[i][0]=1;
+                }
+                else
+                {
+                    mapping[i][0]=0;
+                }
+                Log.d("binaryMap", "" + i + ": " + mapping[i][0]);
 
+                for(int j=1; j<13; j++)
+                {
+                    fretboardValues[i][j] = (fretboardValues[i][j-1] + 1) % 12;
+                    if ( chosenNoteBinaryMap[fretboardValues[i][j]] == 1 )
+                    {
+                        mapping[i][j] = 1;
+                    }
+                    else
+                    {
+                        mapping[i][j] = 0;
+                    }
+                    Log.d("binaryMap", "" + i + ": " + mapping[i][j]);
+                }
+                Log.d("binaryMap", "NEXT STRING");
+            }
+            return mapping;
+        }
 
-        public void drawFretboard (Array stringX[], Array fretY[], Array mappingArray[], int screenHeight, int screenWidth, Bitmap bitmap, Canvas canvas) {
+        public void drawFretboard (int mappingArray[][], Canvas canvas) {
+
+            float stringX[] = getStringX();
+            float fretY[] = getFretY();
+
             myPaint.setColor(Color.BLACK);
 
             for (int i = 0; i < stringX.length; i++) {
@@ -208,19 +285,19 @@ public class fretboardActivity extends Activity {
             }
 
             for (int i = 1; i <= numberOfFrets + 1; i++) {
-                canvas.drawRect(startOfScreenX, stringY[i - 1],
-                        stringWidth + stringX[numberOfStrings - 1], stringY[i - 1] + stringWidth, myPaint);
+                canvas.drawRect(startOfScreenX, fretY[i - 1],
+                        stringWidth + stringX[numberOfStrings - 1], fretY[i - 1] + stringWidth, myPaint);
             }
 
             for (int i = 0; i < numberOfStrings; i++) {
                 if (mappingArray[i][0] == 1) {
-                    canvas.drawCircle(stringX[i] + stringWidth / 2, stringY[0] - getFretSeparation() / 2,
-                            fretSeparation / 4, myPaint);
+                    canvas.drawCircle(stringX[i] + stringWidth / 2, fretY[0] - getFretSeparation() / 2,
+                            fretSeparation / 8, myPaint);
                 }
                 for (int j = 1; j < 12; j++) {
                     if (mappingArray[i][j] == 1) {
-                        canvas.drawCircle(stringX[i] + stringWidth / 2, stringY[j - 1] + getFretSeparation() / 2,
-                                fretSeparation / 4, myPaint);
+                        canvas.drawCircle(stringX[i] + stringWidth / 2, fretY[j - 1] + getFretSeparation() / 2,
+                                fretSeparation / 8, myPaint);
                     }
                 }
             }
@@ -228,6 +305,7 @@ public class fretboardActivity extends Activity {
         }
 
     }
+
     public int note_stringToValue(String note)
     {
         int noteValue = 0;
@@ -264,57 +342,6 @@ public class fretboardActivity extends Activity {
         return letter;
     }
 
-    public int[][] mapChosenNotesToFretboard(ArrayList tuningNotes, ArrayList chosenNotes)
-    {
-        int chosenNoteBinaryMap[] = new int [12];
-        for(int i=0 ; i < chosenNotes.size(); i++)
-        {
-            String noteString = chosenNotes.get(i).toString();
-            int note = note_stringToValue(noteString);
-            Log.d("chosen notes","|" + noteString + "|" + note);
-            chosenNoteBinaryMap[note] = 1;
-        }
-
-        int numberOfGuitarStrings = tuningNotes.size();
-        int [][] fretboardValues = new int [numberOfGuitarStrings][13];
-        int[][] mapping = new int [numberOfGuitarStrings][13];
-        // 0 | 1 2 3 4 5 6 7 8 9 10 12
-        // 0 | 1 2 3 4 5 6 7 8 9 10 12
-        // 0 | 1 2 3 4 5 6 7 8 9 10 12
-        // 0 | 1 2 3 4 5 6 7 8 9 10 12
-        // 0 | 1 2 3 4 5 6 7 8 9 10 12
-        // 0 | 1 2 3 4 5 6 7 8 9 10 12
-
-        for(int i=0; i < numberOfGuitarStrings; i++)
-        {
-            fretboardValues[i][0] = note_stringToValue(tuningNotes.get(i).toString());
-            if ( chosenNoteBinaryMap[fretboardValues[i][0]] == 1)
-            {
-                mapping[i][0]=1;
-            }
-            else
-            {
-                mapping[i][0]=0;
-            }
-            Log.d("binaryMap", "" + i + ": " + mapping[i][0]);
-
-            for(int j=1; j<13; j++)
-            {
-                fretboardValues[i][j] = (fretboardValues[i][j-1] + 1) % 12;
-                if ( chosenNoteBinaryMap[fretboardValues[i][j]] == 1 )
-                {
-                    mapping[i][j] = 1;
-                }
-                else
-                {
-                    mapping[i][j] = 0;
-                }
-                Log.d("binaryMap", "" + i + ": " + mapping[i][j]);
-            }
-            Log.d("binaryMap", "NEXT STRING");
-        }
-        return mapping;
-    }
 
     public void saveToFile(Bitmap bitmap, String filename){
         String path = this.getFilesDir().getAbsolutePath();
