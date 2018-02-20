@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Color;
+import android.graphics.Matrix;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.ImageView;
@@ -95,62 +96,138 @@ public class fretboardActivity extends Activity {
     }
 
 
-    public void drawFretboard (ArrayList tuningNoteArrayList, ArrayList chosenNotesArrayList, int mappingArray[][], Bitmap bitmap, Canvas fretboardCanvas)
-    {
-        Paint myPaint = new Paint();
-        myPaint.setColor(Color.BLACK);
+    public void drawFretboard (ArrayList tuningNoteArrayList, ArrayList chosenNotesArrayList, int mappingArray[][]) {
 
-        int numberOfFrets = 12;
-        int screenWidth = bitmap.getWidth();
-        int screenHeight = bitmap.getHeight();
+    }
 
-        float stringWidth = screenWidth/64;
-        float startOfScreenX = screenWidth/8;
+    public class fretboard {
+        private Paint myPaint = new Paint();
 
-        int numberOfStrings = tuningNoteArrayList.size();
-        int numberOfChosenNotes = chosenNotesArrayList.size();
+        private ArrayList tuningNoteArrayList[];
+        private ArrayList chosenNotesArrayList[];
 
-        float stringX[] = new float[numberOfStrings];
-        Log.d("numberOfString", "" + numberOfStrings);
-        Log.d("screenWidth", "" + screenWidth);
+        //get screen width
+        private float screenWidth = 1000;
+        private float screenHeight = 4000;
+        private float stringWidth;
+        private float startOfScreenX;
+        private float stringSeparation = 0;
+        private float fretSeparation = 0;
 
-        float stringSeparation = 0;
-        float fretSeparation = 0;
-        stringSeparation = (float)(1./(numberOfStrings-1)*(1-2*startOfScreenX/screenWidth)*screenWidth);
-        fretSeparation = (screenHeight/(numberOfFrets-1));
-
-        for(int i=0; i < numberOfStrings ; i++) {
-            stringX[i] = (startOfScreenX + i*stringSeparation - stringWidth/2);
-            Log.d("stringSeparation", "" + stringSeparation);
-            Log.d("stringX", "String[" +i+ "]" + stringX[i]);
-            fretboardCanvas.drawRect(stringX[i], screenHeight, stringX[i] + stringWidth,(screenHeight/(numberOfFrets-1)) , myPaint);
-        }
-        float stringY[] = new float[numberOfFrets+1];
-        for(int i=1; i<=numberOfFrets+1; i++){
-            stringY[i-1] = i*fretSeparation;
-            Log.d("fret coordinate", "" + stringY[i-1] + "" + (i-1));
-            fretboardCanvas.drawRect(startOfScreenX, stringY[i-1],stringWidth + stringX[numberOfStrings-1], stringY[i-1] + stringWidth, myPaint);
+        public void setScreenWidth(float screenWidth) {
+            this.screenWidth = screenWidth;
         }
 
-        for(int i=0; i<numberOfStrings; i++)
+        public void setScreenHeight(float screenHeight) {
+            this.screenHeight = screenHeight;
+        }
+
+        public void setStringWidth(float stringWidth) {
+            this.stringWidth = stringWidth;
+        }
+
+        public void setStartOfScreenX(float startOfScreenX) {
+            this.startOfScreenX = startOfScreenX;
+        }
+
+        public void setStringSeparation(float stringSeparation) {
+            this.stringSeparation = stringSeparation;
+        }
+
+        public void setFretSeparation(float fretSeparation) {
+            this.fretSeparation = fretSeparation;
+        }
+
+        public float getFretSeparation() {
+            return fretSeparation;
+        }
+
+        private int numberOfFrets = 0;
+        private int numberOfStrings = tuningNoteArrayList.length;
+
+        public void setNumberOfFrets(int numberOfFrets) {
+            this.numberOfFrets = numberOfFrets;
+        }
+
+        public int getNumberOfStrings() {
+            return numberOfStrings;
+        }
+
+        public int getNumberOfFrets() {
+            return numberOfFrets;
+        }
+
+        fretboard(ArrayList tuningArray[], ArrayList chosenArray[])
         {
-            if(mappingArray[i][0] == 1)
-            {
-                fretboardCanvas.drawCircle(stringX[i]+stringWidth/2, stringY[0]-fretSeparation/2,
-                        fretSeparation/4, myPaint);
+            tuningNoteArrayList = tuningArray.clone();
+            chosenNotesArrayList = chosenArray.clone();
+        }
+
+        public void mapFretboard(){
+            if(getNumberOfFrets() != 0){setNumberOfFrets(12);}
+
+            float stringX[] = new float[getNumberOfStrings()];
+            float fretY[] = new float[getNumberOfFrets()+1];
+
+            setStartOfScreenX(1000);
+            setStringWidth(screenWidth/64);
+            setStartOfScreenX(screenWidth/8);
+
+            Log.d("numberOfString", "" + numberOfStrings);
+            Log.d("screenWidth", "" + screenWidth);
+            Log.d("screenHeight", "" + screenHeight);
+
+            setStringSeparation((float) (1. / (numberOfStrings - 1) * (1 - 2 * startOfScreenX / screenWidth) * screenWidth));
+            setFretSeparation(screenHeight / (numberOfFrets - 1));
+
+            for (int i = 0; i < numberOfStrings; i++) {
+                stringX[i] = (startOfScreenX + i * stringSeparation - stringWidth / 2);
+                Log.d("stringSeparation", "" + stringSeparation);
+                Log.d("stringX", "String[" + i + "]" + stringX[i]);
             }
-            for(int j=1; j<12; j++)
-            {
-                if(mappingArray[i][j] == 1)
-                {
-                    fretboardCanvas.drawCircle(stringX[i]+stringWidth/2, stringY[j-1]+fretSeparation/2,
-                            fretSeparation/4, myPaint);
+
+            for (int i = 1; i <= numberOfFrets + 1; i++) {
+                fretY[i - 1] = i * fretSeparation;
+                Log.d("fret coordinate", "" + fretY[i - 1] + " " + (i - 1));
+                if (fretY[i - 1] > (7. / 8.) * screenHeight) {
+                    screenHeight *= 1.25;
                 }
             }
         }
 
-    }
 
+
+
+
+        public void drawFretboard (Array stringX[], Array fretY[], Array mappingArray[], int screenHeight, int screenWidth, Bitmap bitmap, Canvas canvas) {
+            myPaint.setColor(Color.BLACK);
+
+            for (int i = 0; i < stringX.length; i++) {
+                canvas.drawRect(stringX[i], screenHeight,
+                        stringX[i] + stringWidth, getFretSeparation(), myPaint);
+            }
+
+            for (int i = 1; i <= numberOfFrets + 1; i++) {
+                canvas.drawRect(startOfScreenX, stringY[i - 1],
+                        stringWidth + stringX[numberOfStrings - 1], stringY[i - 1] + stringWidth, myPaint);
+            }
+
+            for (int i = 0; i < numberOfStrings; i++) {
+                if (mappingArray[i][0] == 1) {
+                    canvas.drawCircle(stringX[i] + stringWidth / 2, stringY[0] - getFretSeparation() / 2,
+                            fretSeparation / 4, myPaint);
+                }
+                for (int j = 1; j < 12; j++) {
+                    if (mappingArray[i][j] == 1) {
+                        canvas.drawCircle(stringX[i] + stringWidth / 2, stringY[j - 1] + getFretSeparation() / 2,
+                                fretSeparation / 4, myPaint);
+                    }
+                }
+            }
+
+        }
+
+    }
     public int note_stringToValue(String note)
     {
         int noteValue = 0;
@@ -261,6 +338,24 @@ public class fretboardActivity extends Activity {
             }
         }
     }
+
+    public Bitmap getResizedBitmap(Bitmap bm, int newHeight, int newWidth) {
+        // GET CURRENT SIZE
+        int width = bm.getWidth();
+        int height = bm.getHeight();
+        // GET SCALE SIZE
+        float scaleWidth = ((float) newWidth) / width;
+        float scaleHeight = ((float) newHeight) / height;
+        // CREATE A MATRIX FOR THE MANIPULATION
+        Matrix matrix = new Matrix();
+        // RESIZE THE BIT MAP
+        matrix.postScale(scaleWidth, scaleHeight);
+        // "RECREATE" THE NEW BITMAP
+        Bitmap resizedBitmap = Bitmap.createBitmap(bm, 0, 0, width, height, matrix, false);
+        return resizedBitmap;
+    }
+
+
 
 }
 
